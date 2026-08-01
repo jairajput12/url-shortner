@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>URL Shortener</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 500px;
+    margin: 80px auto;
+    text-align: center;
+    background: #f4f6f8;
+  }
+  h1 {
+    color: #222;
+  }
+  input {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  button {
+    padding: 10px 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #1d4ed8;
+  }
+  #result {
+    margin-top: 20px;
+    font-size: 16px;
+  }
+  #result a {
+    color: #2563eb;
+  }
+</style>
+</head>
+<body>
+
+  <h1>URL Shortener</h1>
+  <input type="text" id="longUrl" placeholder="Paste your long URL here">
+  <br>
+  <button onclick="shortenUrl()">Shorten</button>
+
+  <div id="result"></div>
+
+  <script>
+    // Replace this with your actual Lambda Function URL
+    const API_ENDPOINT = "https://piqybgwhntksur5x2cl6e2spha0nvlmw.lambda-url.ap-southeast-2.on.aws/";
+
+    async function shortenUrl() {
+      const longUrl = document.getElementById('longUrl').value.trim();
+      const resultDiv = document.getElementById('result');
+
+      if (!longUrl) {
+        resultDiv.innerHTML = "Please enter a URL.";
+        return;
+      }
+
+      resultDiv.innerHTML = "Shortening...";
+
+      try {
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: longUrl })
+        });
+
+        const data = await response.json();
+
+        if (data.shortCode) {
+          const shortUrl = API_ENDPOINT + data.shortCode;
+          resultDiv.innerHTML = `Short URL: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
+        } else {
+          resultDiv.innerHTML = "Error: " + (data.error || "Something went wrong");
+        }
+      } catch (err) {
+        resultDiv.innerHTML = "Error: " + err.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
