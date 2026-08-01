@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SentinelAI URL Shortener</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .card {
+    background: #1e293b;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    width: 420px;
+  }
+  h1 {
+    font-size: 22px;
+    margin-bottom: 8px;
+    color: #38bdf8;
+  }
+  p.subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-size: 14px;
+    box-sizing: border-box;
+    margin-bottom: 14px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background: #0ea5e9; }
+  button:disabled { background: #475569; cursor: not-allowed; }
+  .result {
+    margin-top: 20px;
+    padding: 14px;
+    background: #0f172a;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    display: none;
+  }
+  .result.show { display: block; }
+  .result a {
+    color: #4ade80;
+    word-break: break-all;
+    text-decoration: none;
+  }
+  .result a:hover { text-decoration: underline; }
+  .copy-btn {
+    margin-top: 10px;
+    background: #334155;
+    color: #e2e8f0;
+    font-size: 12px;
+    padding: 6px 10px;
+    width: auto;
+  }
+  .error {
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 10px;
+    display: none;
+  }
+  .error.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🔗 URL Shortener</h1>
+  <p class="subtitle">Paste a long link below to get a short one, powered by AWS Lambda + DynamoDB.</p>
+
+  <input type="text" id="urlInput" placeholder="https://example.com/very/long/link">
+  <button id="shortenBtn" onclick="shortenUrl()">Shorten URL</button>
+
+  <div class="error" id="errorBox">Something went wrong. Please check the URL and try again.</div>
+
+  <div class="result" id="resultBox">
+    <div>Your short link:</div>
+    <a id="shortLink" href="#" target="_blank"></a>
+    <br>
+    <button class="copy-btn" onclick="copyLink()">Copy to clipboard</button>
+  </div>
+</div>
+
+<script>
+  // Replace this with your own Function URL if it ever changes
+  const FUNCTION_URL = "https://piqybgwhntksur5x2cl6e2spha0nvlmw.lambda-url.ap-southeast-2.on.aws/";
+
+  async function shortenUrl() {
+    const input = document.getElementById('urlInput');
+    const btn = document.getElementById('shortenBtn');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+    const shortLink = document.getElementById('shortLink');
+
+    const longUrl = input.value.trim();
+
+    resultBox.classList.remove('show');
+    errorBox.classList.remove('show');
+
+    if (!longUrl) {
+      errorBox.textContent = "Please enter a URL first.";
+      errorBox.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Shortening...";
+
+    try {
+      const response = await fetch(FUNCTION_URL, {
+        method: 'POST',
+        body: JSON.stringify({ url: longUrl })
+      });
+
+      if (!response.ok) throw new Error("Server error");
+
+      const data = await response.json();
+      const fullShortLink = FUNCTION_URL + data.short_code;
+
+      shortLink.href = fullShortLink;
+      shortLink.textContent = fullShortLink;
+      resultBox.classList.add('show');
+    } catch (err) {
+      errorBox.textContent = "Something went wrong. Please check the URL and try again.";
+      errorBox.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Shorten URL";
+    }
+  }
+
+  function copyLink() {
+    const shortLink = document.getElementById('shortLink').textContent;
+    navigator.clipboard.writeText(shortLink);
+    alert("Copied to clipboard!");
+  }
+</script>
+
+</body>
+</html>
